@@ -37,7 +37,14 @@ async function initCodexAction(
 
   try {
     // Dynamic import of the Codex initializer with lazy loading fallback
-    let CodexInitializer: any;
+    interface CodexInitResult {
+      success: boolean;
+      errors?: string[];
+      filesCreated: string[];
+      skillsGenerated: string[];
+      warnings?: string[];
+    }
+    let CodexInitializer: (new () => { initialize: (options: Record<string, unknown>) => Promise<CodexInitResult> }) | undefined;
 
     // Try multiple resolution strategies for the @claude-flow/codex package
     // Use a variable to prevent TypeScript from statically resolving the optional module
@@ -378,7 +385,7 @@ const initAction = async (ctx: CommandContext): Promise<CommandResult> => {
 
     // Handle --with-embeddings
     const withEmbeddings = ctx.flags['with-embeddings'] || ctx.flags.withEmbeddings;
-    const embeddingModel = (ctx.flags['embedding-model'] || ctx.flags.embeddingModel || 'all-MiniLM-L6-v2') as string;
+    const embeddingModel = (ctx.flags['embedding-model'] || ctx.flags.embeddingModel || 'Xenova/all-MiniLM-L6-v2') as string;
 
     if (withEmbeddings) {
       output.writeln();
@@ -599,13 +606,13 @@ const wizardCommand: Command = {
         default: true,
       });
 
-      let embeddingModel = 'all-MiniLM-L6-v2';
+      let embeddingModel = 'Xenova/all-MiniLM-L6-v2';
       if (enableEmbeddings) {
         embeddingModel = await select({
           message: 'Select embedding model:',
           options: [
-            { value: 'all-MiniLM-L6-v2', label: 'MiniLM L6 (384d)', hint: 'Fast, good quality (recommended)' },
-            { value: 'all-mpnet-base-v2', label: 'MPNet Base (768d)', hint: 'Higher quality, more memory' },
+            { value: 'Xenova/all-MiniLM-L6-v2', label: 'MiniLM L6 (384d)', hint: 'Fast, good quality (recommended)' },
+            { value: 'Xenova/all-mpnet-base-v2', label: 'MPNet Base (768d)', hint: 'Higher quality, more memory' },
           ],
         });
       }
@@ -1059,8 +1066,8 @@ export const initCommand: Command = {
       name: 'embedding-model',
       description: 'ONNX embedding model to use',
       type: 'string',
-      default: 'all-MiniLM-L6-v2',
-      choices: ['all-MiniLM-L6-v2', 'all-mpnet-base-v2'],
+      default: 'Xenova/all-MiniLM-L6-v2',
+      choices: ['Xenova/all-MiniLM-L6-v2', 'Xenova/all-mpnet-base-v2'],
     },
     {
       name: 'codex',
@@ -1086,7 +1093,7 @@ export const initCommand: Command = {
     { command: 'claude-flow init --skip-claude', description: 'Only create V3 runtime' },
     { command: 'claude-flow init wizard', description: 'Interactive setup wizard' },
     { command: 'claude-flow init --with-embeddings', description: 'Initialize with ONNX embeddings' },
-    { command: 'claude-flow init --with-embeddings --embedding-model all-mpnet-base-v2', description: 'Use larger embedding model' },
+    { command: 'claude-flow init --with-embeddings --embedding-model Xenova/all-mpnet-base-v2', description: 'Use larger embedding model' },
     { command: 'claude-flow init skills --all', description: 'Install all available skills' },
     { command: 'claude-flow init hooks --minimal', description: 'Create minimal hooks configuration' },
     { command: 'claude-flow init upgrade', description: 'Update helpers while preserving data' },
